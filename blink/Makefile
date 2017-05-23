@@ -10,4 +10,3 @@ default:
 
 stop:
 	docker stop led-blink
-	docker rm led-blink
