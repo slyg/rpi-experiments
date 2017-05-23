@@ -5,16 +5,17 @@ import time
 GPIO.setmode(GPIO.BCM)
 
 red_pin = 18
+delay = 0.2
 
 GPIO.setup(red_pin, GPIO.OUT)
 
 
 try:
     while True:
-        GPIO.output(red_pin, True)  # LED on
-        time.sleep(0.5)             # delay 0.5 seconds
-        GPIO.output(red_pin, False) # LED off
-        time.sleep(0.5)             # delay 0.5 seconds
+        GPIO.output(red_pin, True)
+        time.sleep(delay)
+        GPIO.output(red_pin, False)
+        time.sleep(delay)
 finally:
     print("Cleaning up")
     GPIO.cleanup()
