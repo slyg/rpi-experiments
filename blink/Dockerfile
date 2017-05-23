@@ -1,6 +1,6 @@
 FROM resin/rpi-raspbian:latest
 
-RUN apt-get -q update
+RUN apt-get -q update \
  && apt-get -qy install \
     python \
     python-pip \
