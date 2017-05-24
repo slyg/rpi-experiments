@@ -1,4 +1,4 @@
-default:
+start:
 	docker build -t blink .
 	docker run \
 		-it \
@@ -11,5 +11,5 @@ default:
 stop:
 	docker stop led-blink
 
-.DEFAULT_GOAL: default
+.DEFAULT_GOAL: start
 .PHONY: default stop
