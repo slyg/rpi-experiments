@@ -8,6 +8,7 @@ delay = 0.5
 GPIO.setmode(GPIO.BCM)
 GPIO.setup(red_pin, GPIO.OUT)
 
+@atexit.register
 def exit_handler():
     print("Cleaning up")
     GPIO.cleanup()
@@ -20,5 +21,3 @@ try:
         time.sleep(delay)
 finally:
     exit_handler()
-
-atexit.register(exit_handler)
