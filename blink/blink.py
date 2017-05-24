@@ -9,7 +9,6 @@ red_pin = 18
 delay = 0.5
 
 GPIO.setup(red_pin, GPIO.OUT)
-atexit.register(exit_handler)
 
 def exit_handler():
     print("Cleaning up")
@@ -23,3 +22,5 @@ try:
         time.sleep(delay)
 finally:
     exit_handler()
+
+atexit.register(exit_handler)

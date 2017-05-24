@@ -9,7 +9,7 @@ RUN apt-get -q update \
     gcc \
     make
 
-RUN pip install rpi.gpio atexit
+RUN pip install rpi.gpio
 
 COPY ./blink.py ./blink.py
 
