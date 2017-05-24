@@ -11,5 +11,5 @@ default:
 stop:
 	docker stop led-blink
 
-.DEFAULT_GOAL := default
-.PHONY := default stop
+.DEFAULT_GOAL: default
+.PHONY: default stop

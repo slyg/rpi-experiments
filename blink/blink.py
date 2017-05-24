@@ -2,12 +2,10 @@ import RPi.GPIO as GPIO
 import time
 import atexit
 
-# Configure the Pi to use the BCM (Broadcom) pin names, rather than the pin positions
-GPIO.setmode(GPIO.BCM)
-
 red_pin = 18
 delay = 0.5
 
+GPIO.setmode(GPIO.BCM)
 GPIO.setup(red_pin, GPIO.OUT)
 
 def exit_handler():
