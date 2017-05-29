@@ -4,4 +4,4 @@ blink:
 blink-stop:
 	cd blink && make stop
 
-.PHONY: blink
+.PHONY = blink
