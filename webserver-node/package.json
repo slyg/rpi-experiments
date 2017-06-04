@@ -6,9 +6,12 @@
   "author": "Sylvain Faucherand",
   "license": "ISC",
   "dependencies": {
-    "express": "4.15.3"
+    "koa": "2.2.0",
+    "babel-cli": "6.24.1",
+    "babel-core": "6.24.1",
+    "babel-plugin-transform-async-to-generator": "6.24.1"
   },
   "scripts": {
-    "start": "node app.js"
+    "start": "./node_modules/.bin/babel-node app.js"
   }
 }
