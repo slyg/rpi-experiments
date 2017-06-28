@@ -1,0 +1,20 @@
+{
+  "name": "camera-snapshot-node",
+  "version": "1.0.0",
+  "description": "",
+  "main": "app.js",
+  "author": "Sylvain Faucherand",
+  "license": "ISC",
+  "dependencies": {
+    "koa": "2.2.0",
+    "koa-route": "3.2.0",
+    "koa-static": "3.0.0",
+    "babel-cli": "6.24.1",
+    "babel-core": "6.24.1",
+    "babel-plugin-transform-async-to-generator": "6.24.1",
+    "pi-camera": "0.3.3"
+  },
+  "scripts": {
+    "start": "./node_modules/.bin/babel-node app.js"
+  }
+}
