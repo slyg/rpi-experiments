@@ -2,9 +2,9 @@ const five = require('johnny-five')
 const Raspi = require('raspi-io')
 const board = new five.Board({ io: new Raspi() })
 
-const CYCLE_DURATION = 1000
-const LOOP_START_DELAY = 100
-const END_OF_ALL_DELAY = 5000
+const CYCLE_DURATION = 500
+const LOOP_START_DELAY = 50
+const END_OF_ALL_DELAY = 10000
 
 const delay = time => new Promise(resolve => setTimeout(resolve, time))
 
