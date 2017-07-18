@@ -3,9 +3,9 @@ const Raspi = require('raspi-io')
 const randomColor = require('randomcolor')
 const board = new five.Board({ io: new Raspi({enableSoftPwm: true}) })
 
-const RED = 'P1-12'
-const GREEN = 'P1-16'
-const BLUE = 'P1-18'
+const RED   = 'P1-12' // Pin 18
+const GREEN = 'P1-16' // Pin 23
+const BLUE  = 'P1-18' // Pin 24
 
 board.on('ready', function() {
 
