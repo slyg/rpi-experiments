@@ -3,8 +3,10 @@ import time
 import signal
 import sys
 
-red_pin = 18
-delay = 0.5
+red_pin   = 18
+green_pin = 23
+blue_pin  = 24
+delay     = 0.5
 
 GPIO.setmode(GPIO.BCM)
 GPIO.setup(red_pin, GPIO.OUT)
