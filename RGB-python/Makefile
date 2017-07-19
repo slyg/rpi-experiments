@@ -3,9 +3,9 @@ start:
 	docker run \
 		-it \
 		--rm \
-		-d \
 		--privileged \
 		--name rainbow \
+		-v $(CURDIR):/www \
 		slyg/rgb-python
 
 stop:
