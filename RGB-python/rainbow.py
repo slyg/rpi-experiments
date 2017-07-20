@@ -2,14 +2,9 @@ import RPi.GPIO as GPIO
 import time
 import signal
 import sys
+import random
 
-red_pin   = 18
-green_pin = 23
-blue_pin  = 24
-delay     = 0.5
-
-GPIO.setmode(GPIO.BCM)
-GPIO.setup(red_pin, GPIO.OUT)
+# Exit handling
 
 def exit_handler(signal, frame):
   GPIO.cleanup()
@@ -17,15 +12,29 @@ def exit_handler(signal, frame):
 
 signal.signal(signal.SIGTERM, exit_handler)
 
+# GPIO and pins setup
+
+GPIO.setmode(GPIO.BCM)
+GPIO.setwarnings(False)
+
+pin_numbers = [18, 23, 24] # RGB
+
+def power_mode_setup(pin_num):
+  GPIO.setup(pin_num, GPIO.OUT)
+  pin = GPIO.PWM(pin_num, 100)
+  pin.start(0)
+  return pin
+
+pwm_pins = list(map(power_mode_setup, pin_numbers))
+
+# Main loop
+
+delay = 0.2
+
 try:
   while True:
-    GPIO.output(red_pin, True)
-    time.sleep(delay)
-    GPIO.output(red_pin, False)
+    for pin in pwm_pins: pin.ChangeDutyCycle(random.randint(0, 100))
     time.sleep(delay)
 
-except KeyboardInterrupt:
-  GPIO.cleanup()
-
-finally:
-  GPIO.cleanup()
+except: GPIO.cleanup()
+finally: GPIO.cleanup()
