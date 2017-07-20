@@ -4,8 +4,8 @@ const board = new five.Board({ io: new Raspi() })
 
 board.on('ready', function() {
 
-  const motion = new five.Motion('P1-7')
-  const led = new five.Led('P1-12')
+  const motion = new five.Motion('P1-22') // Pin 25
+  const led = new five.Led('P1-12') // Pin 18
   const FADE_DURATION = 1000
 
   motion
