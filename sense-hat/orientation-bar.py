@@ -1,5 +1,7 @@
 from sense_hat import SenseHat
 import math
+import signal
+import sys
 
 sense = SenseHat()
 sense.set_rotation(90)
@@ -24,6 +26,13 @@ def shiftAngle (angle):
 def pixelRow(angle):
   normalized_angle = math.floor( rows * shiftAngle(angle) / 360 )
   return [colours_per_row[i] if i == normalized_angle else black for i in range(rows)]
+
+# Exit handling
+def exit_handler(signal, frame):
+  sense.clear()
+  sys.exit(0)
+
+signal.signal(signal.SIGTERM, exit_handler)
 
 while True:
     roll = sense.get_orientation_degrees()['roll']

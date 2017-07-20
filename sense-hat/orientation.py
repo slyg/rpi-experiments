@@ -1,9 +1,18 @@
 from sense_hat import SenseHat
+import signal
+import sys
 
 sense = SenseHat()
 
 colored = (218,112,214)
 black = (0, 0, 0)
+
+# Exit handling
+def exit_handler(signal, frame):
+  sense.clear()
+  sys.exit(0)
+
+signal.signal(signal.SIGTERM, exit_handler)
 
 while True:
     rawOrientation = sense.get_orientation_degrees()['roll']
