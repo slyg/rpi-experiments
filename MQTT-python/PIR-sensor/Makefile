@@ -5,6 +5,7 @@ start:
 		--rm \
 		--privileged \
 		--name mqtt-python-pir-detector \
+		-v /lib/modules:/lib/modules \
 		-v $(CURDIR):/www \
 		slyg/mqtt-python-pir-detector
 
