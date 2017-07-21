@@ -22,7 +22,7 @@ BLACK_MTX = [(0, 0, 0) for i in range(PIX_NUM)]
 
 # MQTT setup
 
-BROKER_ADDR = 'rpi-03'
+BROKER_ADDR = 'rpi-01'
 
 def on_message(client, userdata, message):
   msg = str(message.payload.decode('utf-8'))

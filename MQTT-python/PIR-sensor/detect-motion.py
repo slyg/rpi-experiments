@@ -14,7 +14,7 @@ signal.signal(signal.SIGTERM, exit_handler)
 
 # Establish MQTT connection
 
-BROKER_ADDR = 'rpi-03'
+BROKER_ADDR = 'rpi-01'
 
 client = mqtt.Client()      # create new instance
 client.connect(BROKER_ADDR) # connect to broker
