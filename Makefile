@@ -7,4 +7,7 @@ push-02:
 push-03:
 	rsync -a ./ pi@rpi-03:raspberry-pi-experiments
 
-.PHONY: push-01 push-02 push-03
+push-04:
+	rsync -a ./ pi@rpi-04:raspberry-pi-experiments
+
+.PHONY: push-01 push-02 push-03 push-03
