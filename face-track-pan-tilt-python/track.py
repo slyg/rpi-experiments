@@ -25,7 +25,7 @@ camera_center = (160, 120) # from camera resolution
 time.sleep(1)
 
 def extract_area_size(face):
-  x,y,w,h = face
+  x, y, w, h = face
   area = w * h
   return (area, face)
 
@@ -36,6 +36,15 @@ def keep_biggest(previous_face, current_face):
     return current_face
   else:
     return previous_face
+
+def get_biggest_face(faces):
+  if faces is not ():
+    face_with_areas = map(extract_area_size, faces)
+    biggest_face_with_area = reduce(keep_biggest, face_with_areas)
+    _, biggest_face = biggest_face_with_area
+    return biggest_face
+  else:
+    return ()
 
 while True:
 
@@ -54,13 +63,14 @@ while True:
     # Look for faces in the image
     faces = face_cascade.detectMultiScale(gray, 1.1, 5)
 
-    if faces is not ():
-      face_with_areas = map(extract_area_size, faces)
-      biggest_face = reduce(keep_biggest, face_with_areas)
-      _, face = biggest_face
-      x, y, w, h = face
+    # Look for the biggest face
+    biggest_face = get_biggest_face(faces)
+
+    if biggest_face is not ():
+      x, y, w, h = biggest_face
       print "Face detected at " + str(x) + ":" + str(y)
 
-  except:
+  except Exception as e:
+    print e
     camera.stop_recording()
     sys.exit(0)
