@@ -4,9 +4,20 @@ import cv2
 import numpy
 import time
 import sys
+import RPi.GPIO as GPIO
 
-# Face detection Haar cascade file
-face_cascade = cv2.CascadeClassifier('/usr/share/opencv/haarcascades/haarcascade_frontalface_alt.xml')
+SERVO_X_PIN = 32
+SERVO_Y_PIN = 31
+SERVO_ANGLE_STEP = 5 # deg
+
+GPIO.setmode(GPIO.BOARD)
+GPIO.setup(SERVO_X_PIN, GPIO.OUT)
+GPIO.setup(SERVO_Y_PIN, GPIO.OUT)
+GPIO.setwarnings(False)
+
+servo_frequency = 50 # 50Hz <=> 20ms cycle
+servo_x = GPIO.PWM(SERVO_X_PIN, 50)
+servo_y = GPIO.PWM(SERVO_Y_PIN, 50)
 
 def create_video_stream():
   # Create a memory stream for video
@@ -14,10 +25,9 @@ def create_video_stream():
   # Setup camera options
   camera = picamera.PiCamera()
   camera.resolution = (320, 240)
-  camera.color_effects = (128,128) # black and white capture
   camera.start_preview()
   camera.rotation = 180 # flip picture as camera is mounted upside-down
-  camera.start_recording(v_stream, format='h264', quality=30) # [0:high , 40:low]
+  camera.start_recording(v_stream, format='h264', quality=20) # [0:high , 40:low]
   return camera
 
 def extract_area_size(face):
@@ -47,7 +57,7 @@ def get_compensation_directions(face):
   face_center_y = y + h / 2
 
   x0, y0 = camera_center
-  center_rad = 10
+  center_rad = 20
 
   direction_x = "Center"
   direction_y = "Center"
@@ -64,9 +74,28 @@ def get_compensation_directions(face):
 
   return (direction_x, direction_y)
 
+def angle_to_duty(angle):
+  if angle > 179 :
+    return angle_to_duty(179)
+  elif angle < 1 :
+    return angle_to_duty(1)
+  else :
+    return float(angle) / 18 + 2.5
+
 
 camera = create_video_stream()
 camera_center = map(lambda x: x/2, camera.resolution) # from camera resolution
+
+# Face detection Haar cascade file
+face_cascade = cv2.CascadeClassifier('/usr/share/opencv/haarcascades/haarcascade_frontalface_alt.xml')
+
+angle_x = 90
+angle_y = 90
+
+servo_x.start(angle_to_duty(angle_x))
+servo_y.start(angle_to_duty(angle_y))
+
+time.sleep(1)
 
 while True:
 
@@ -83,7 +112,7 @@ while True:
     gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
 
     # Look for faces in the image
-    faces = face_cascade.detectMultiScale(gray, 1.1, 5)
+    faces = face_cascade.detectMultiScale(gray, 1.5, 2)
 
     if faces is not ():
       # Look for the biggest face
@@ -92,9 +121,23 @@ while True:
       # Compute compensation
       dx, dy = get_compensation_directions(biggest_face)
 
-      print "go : " + str(dx) + " // " + str(dy)
+      if dx == "Right":
+        angle_x = angle_x - SERVO_ANGLE_STEP
+      elif dx == "Left":
+        angle_x = angle_x + SERVO_ANGLE_STEP
+
+      if dy == "Bottom":
+        angle_y = angle_y + SERVO_ANGLE_STEP
+      elif dy == "Top":
+        angle_y = angle_y - SERVO_ANGLE_STEP
+
+      servo_x.ChangeDutyCycle(angle_to_duty(angle_x))
+      servo_y.ChangeDutyCycle(angle_to_duty(angle_y))
+
+      print "tick " + dx + ":" + dy
 
   except Exception as e:
     print e
     camera.stop_recording()
+    GPIO.cleanup()
     sys.exit(0)
