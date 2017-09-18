@@ -8,19 +8,17 @@ import sys
 # Face detection Haar cascade file
 face_cascade = cv2.CascadeClassifier('/usr/share/opencv/haarcascades/haarcascade_frontalface_alt.xml')
 
-# Create a memory stream for video
-v_stream = io.BytesIO()
-
-# Setup camera options
-camera = picamera.PiCamera()
-
-camera.resolution = (320, 240)
-camera.color_effects = (128,128) # black and white capture
-camera.start_preview()
-camera.rotation = 180
-camera.start_recording(v_stream, format='h264', quality=10) # 0:high / 40:low
-
-camera_center = map(lambda x: x/2, camera.resolution) # from camera resolution
+def create_video_stream():
+  # Create a memory stream for video
+  v_stream = io.BytesIO()
+  # Setup camera options
+  camera = picamera.PiCamera()
+  camera.resolution = (320, 240)
+  camera.color_effects = (128,128) # black and white capture
+  camera.start_preview()
+  camera.rotation = 180 # flip picture as camera is mounted upside-down
+  camera.start_recording(v_stream, format='h264', quality=30) # [0:high , 40:low]
+  return camera
 
 def extract_area_size(face):
   x, y, w, h = face
@@ -67,6 +65,9 @@ def get_compensation_directions(face):
   return (direction_x, direction_y)
 
 
+camera = create_video_stream()
+camera_center = map(lambda x: x/2, camera.resolution) # from camera resolution
+
 while True:
 
   try:
@@ -79,7 +80,7 @@ while True:
     image = cv2.imdecode(buff, 1)
 
     # Convert to grayscale
-    gray = cv2.cvtColor(image,cv2.COLOR_BGR2GRAY)
+    gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
 
     # Look for faces in the image
     faces = face_cascade.detectMultiScale(gray, 1.1, 5)
