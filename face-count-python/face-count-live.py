@@ -3,45 +3,44 @@ import picamera
 import cv2
 import numpy
 import time
+import sys
 
-
-#Load a cascade file for detecting faces
+# Face detection Haar cascade file
 face_cascade = cv2.CascadeClassifier('/usr/share/opencv/haarcascades/haarcascade_frontalface_alt.xml')
+
+# Create a memory stream for video
+v_stream = io.BytesIO()
+
+# Setup camera options
+camera = picamera.PiCamera()
+
+camera.resolution = (320, 240)
+camera.color_effects = (128,128) # black and white capture
+camera.start_preview()
+camera.rotation = 180
+camera.start_recording(v_stream, format='h264', quality=10) # 0:high / 40:low
+
+time.sleep(1)
 
 while True:
 
   try:
 
-    #Create a memory stream so photos doesn't need to be saved in a file
-    stream = io.BytesIO()
+    # Create a memory stream to avoid photos needing to be saved in a file
+    p_stream = io.BytesIO()
+    camera.capture(p_stream, format='jpeg', use_video_port=True, thumbnail=None)
 
-    #Get the picture (low resolution, so it should be quite fast)
-    #Here you can also specify other parameters (e.g.:rotate the image)
-    with picamera.PiCamera() as camera:
-        camera.resolution = (320, 240)
-        camera.capture(stream, format='jpeg')
-
-    #Convert the picture into a numpy array
-    buff = numpy.fromstring(stream.getvalue(), dtype=numpy.uint8)
-
-    #Now creates an OpenCV image
+    buff = numpy.fromstring(p_stream.getvalue(), dtype=numpy.uint8)
     image = cv2.imdecode(buff, 1)
 
-    #Convert to grayscale
+    # Convert to grayscale
     gray = cv2.cvtColor(image,cv2.COLOR_BGR2GRAY)
 
-    # rotate the B&W image by 180 degrees
-    (h, w) = gray.shape[:2]
-    center = (w / 2, h / 2)
-    M = cv2.getRotationMatrix2D(center, 180, 1.0)
-    rotated = cv2.warpAffine(image, M, (w, h))
+    # Look for faces in the image
+    faces = face_cascade.detectMultiScale(gray, 1.1, 5)
 
-    #Look for faces in the image using the loaded cascade file
-    faces = face_cascade.detectMultiScale(rotated, 1.1, 5)
-
-    print "Found " + str(len(faces)) + " face(s)"
+    print str(len(faces))
 
   except:
-    servo_horizontal.stop()
-    GPIO.cleanup()
+    camera.stop_recording()
     sys.exit(0)
