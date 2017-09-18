@@ -20,9 +20,7 @@ camera.start_preview()
 camera.rotation = 180
 camera.start_recording(v_stream, format='h264', quality=10) # 0:high / 40:low
 
-camera_center = (160, 120) # from camera resolution
-
-time.sleep(1)
+camera_center = map(lambda x: x/2, camera.resolution) # from camera resolution
 
 def extract_area_size(face):
   x, y, w, h = face
@@ -38,13 +36,36 @@ def keep_biggest(previous_face, current_face):
     return previous_face
 
 def get_biggest_face(faces):
-  if faces is not ():
-    face_with_areas = map(extract_area_size, faces)
-    biggest_face_with_area = reduce(keep_biggest, face_with_areas)
-    _, biggest_face = biggest_face_with_area
-    return biggest_face
-  else:
-    return ()
+  face_with_areas = map(extract_area_size, faces)
+  biggest_face_with_area = reduce(keep_biggest, face_with_areas)
+  _, biggest_face = biggest_face_with_area
+  return biggest_face
+
+def get_compensation_directions(face):
+
+  x, y, w, h = biggest_face
+
+  face_center_x = x + w / 2
+  face_center_y = y + h / 2
+
+  x0, y0 = camera_center
+  center_rad = 10
+
+  direction_x = "Center"
+  direction_y = "Center"
+
+  if face_center_x > (x0 + center_rad) :
+    direction_x = "Right"
+  elif face_center_x < (x0 - center_rad) :
+    direction_x = "Left"
+
+  if face_center_y > (y0 + center_rad) :
+    direction_y = "Bottom"
+  elif face_center_y < (y0 - center_rad) :
+    direction_y = "Top"
+
+  return (direction_x, direction_y)
+
 
 while True:
 
@@ -63,12 +84,14 @@ while True:
     # Look for faces in the image
     faces = face_cascade.detectMultiScale(gray, 1.1, 5)
 
-    # Look for the biggest face
-    biggest_face = get_biggest_face(faces)
+    if faces is not ():
+      # Look for the biggest face
+      biggest_face = get_biggest_face(faces)
 
-    if biggest_face is not ():
-      x, y, w, h = biggest_face
-      print "Face detected at " + str(x) + ":" + str(y)
+      # Compute compensation
+      dx, dy = get_compensation_directions(biggest_face)
+
+      print "go : " + str(dx) + " // " + str(dy)
 
   except Exception as e:
     print e
