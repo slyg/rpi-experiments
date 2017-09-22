@@ -4,20 +4,20 @@ import cv2
 import numpy
 import time
 import sys
-import RPi.GPIO as GPIO
+from nanpy import (ArduinoApi, SerialManager, Servo)
 
-SERVO_X_PIN = 32
-SERVO_Y_PIN = 31
-SERVO_ANGLE_STEP = 5 # deg
+SERVO_X_ARDUINO_PIN = 8
+SERVO_Y_ARDUINO_PIN = 9
+SERVO_ANGLE_STEP = 3 # deg
 
-GPIO.setmode(GPIO.BOARD)
-GPIO.setup(SERVO_X_PIN, GPIO.OUT)
-GPIO.setup(SERVO_Y_PIN, GPIO.OUT)
-GPIO.setwarnings(False)
+try:
+  ArduinoApi(connection=SerialManager())
+  servo_x = Servo(SERVO_X_ARDUINO_PIN)
+  servo_y = Servo(SERVO_Y_ARDUINO_PIN)
 
-servo_frequency = 50 # 50Hz <=> 20ms cycle
-servo_x = GPIO.PWM(SERVO_X_PIN, 50)
-servo_y = GPIO.PWM(SERVO_Y_PIN, 50)
+except:
+  print("Can't connect to arduino")
+  sys.exit(0)
 
 def create_video_stream():
   # Create a memory stream for video
@@ -27,7 +27,7 @@ def create_video_stream():
   camera.resolution = (320, 240)
   camera.start_preview()
   camera.rotation = 180 # flip picture as camera is mounted upside-down
-  camera.start_recording(v_stream, format='h264', quality=20) # [0:high , 40:low]
+  camera.start_recording(v_stream, format='h264', quality=30) # [0:high , 40:low]
   return camera
 
 def extract_area_size(face):
@@ -57,30 +57,22 @@ def get_compensation_directions(face):
   face_center_y = y + h / 2
 
   x0, y0 = camera_center
-  center_rad = 20
+  center_rad = 10
 
   direction_x = "Center"
   direction_y = "Center"
 
   if face_center_x > (x0 + center_rad) :
-    direction_x = "Right"
+    direction_x = "RIGHT"
   elif face_center_x < (x0 - center_rad) :
-    direction_x = "Left"
+    direction_x = "LEFT"
 
   if face_center_y > (y0 + center_rad) :
-    direction_y = "Bottom"
+    direction_y = "BOTTOM"
   elif face_center_y < (y0 - center_rad) :
-    direction_y = "Top"
+    direction_y = "TOP"
 
   return (direction_x, direction_y)
-
-def angle_to_duty(angle):
-  if angle > 179 :
-    return angle_to_duty(179)
-  elif angle < 1 :
-    return angle_to_duty(1)
-  else :
-    return float(angle) / 18 + 2.5
 
 
 camera = create_video_stream()
@@ -92,8 +84,8 @@ face_cascade = cv2.CascadeClassifier('/usr/share/opencv/haarcascades/haarcascade
 angle_x = 90
 angle_y = 90
 
-servo_x.start(angle_to_duty(angle_x))
-servo_y.start(angle_to_duty(angle_y))
+servo_x.write(angle_x)
+servo_y.write(angle_y)
 
 time.sleep(1)
 
@@ -112,7 +104,7 @@ while True:
     gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
 
     # Look for faces in the image
-    faces = face_cascade.detectMultiScale(gray, 1.5, 2)
+    faces = face_cascade.detectMultiScale(gray, 1.3, 3)
 
     if faces is not ():
       # Look for the biggest face
@@ -121,23 +113,20 @@ while True:
       # Compute compensation
       dx, dy = get_compensation_directions(biggest_face)
 
-      if dx == "Right":
+      if dx == "RIGHT":
         angle_x = angle_x - SERVO_ANGLE_STEP
-      elif dx == "Left":
+      elif dx == "LEFT":
         angle_x = angle_x + SERVO_ANGLE_STEP
 
-      if dy == "Bottom":
+      if dy == "BOTTOM":
         angle_y = angle_y + SERVO_ANGLE_STEP
-      elif dy == "Top":
+      elif dy == "TOP":
         angle_y = angle_y - SERVO_ANGLE_STEP
 
-      servo_x.ChangeDutyCycle(angle_to_duty(angle_x))
-      servo_y.ChangeDutyCycle(angle_to_duty(angle_y))
-
-      print "tick " + dx + ":" + dy
+      servo_x.write(angle_x)
+      servo_y.write(angle_y)
 
   except Exception as e:
     print e
     camera.stop_recording()
-    GPIO.cleanup()
     sys.exit(0)
