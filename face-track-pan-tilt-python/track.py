@@ -25,9 +25,11 @@ def create_video_stream():
   # Setup camera options
   camera = picamera.PiCamera()
   camera.resolution = (320, 240)
+  camera.framerate = 30
   camera.start_preview()
   camera.rotation = 180 # flip picture as camera is mounted upside-down
   camera.start_recording(v_stream, format='h264', quality=30) # [0:high , 40:low]
+  time.sleep(2) # warmup
   return camera
 
 def extract_area_size(face):
@@ -87,8 +89,6 @@ angle_y = 90
 servo_x.write(angle_x)
 servo_y.write(angle_y)
 
-time.sleep(1)
-
 while True:
 
   try:
@@ -104,7 +104,7 @@ while True:
     gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
 
     # Look for faces in the image
-    faces = face_cascade.detectMultiScale(gray, 1.3, 3)
+    faces = face_cascade.detectMultiScale(gray, 1.5, 2)
 
     if faces is not ():
       # Look for the biggest face
