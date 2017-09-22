@@ -20,14 +20,13 @@ except:
   sys.exit(0)
 
 def create_video_stream():
-  # Create a memory stream for video
-  v_stream = io.BytesIO()
-  # Setup camera options
+
   camera = picamera.PiCamera()
   camera.resolution = (320, 240)
   camera.framerate = 30
-  camera.start_preview()
   camera.rotation = 180 # flip picture as camera is mounted upside-down
+
+  v_stream = picamera.PiCameraCircularIO(camera, size=17000000)
   camera.start_recording(v_stream, format='h264', quality=30) # [0:high , 40:low]
   time.sleep(2) # warmup
   return camera
@@ -40,10 +39,7 @@ def extract_area_size(face):
 def keep_biggest(previous_face, current_face):
   area, face = current_face
   p_area, p_face = previous_face
-  if area > p_area:
-    return current_face
-  else:
-    return previous_face
+  return current_face if (area > p_area) else previous_face
 
 def get_biggest_face(faces):
   face_with_areas = map(extract_area_size, faces)
