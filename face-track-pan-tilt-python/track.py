@@ -5,15 +5,21 @@ import numpy
 import time
 import sys
 from nanpy import (ArduinoApi, SerialManager, Servo)
+import RPi.GPIO as GPIO
 
 SERVO_X_ARDUINO_PIN = 8
 SERVO_Y_ARDUINO_PIN = 9
 SERVO_ANGLE_STEP = 4 # deg
+RED_PIN = 18
 
 RIGHT   = "RIGHT"
 LEFT    = "LEFT"
 TOP     = "TOP"
 BOTTOM  = "BOTTOM"
+
+GPIO.setmode(GPIO.BCM)
+GPIO.setwarnings(False)
+GPIO.setup(RED_PIN, GPIO.OUT)
 
 try:
   ArduinoApi(connection=SerialManager())
@@ -108,6 +114,9 @@ while True:
     faces = face_cascade.detectMultiScale(gray, 1.5, 2)
 
     if faces is not ():
+      # Display face detection on a led
+      GPIO.output(RED_PIN, True)
+
       # Look for the biggest face
       biggest_face = get_biggest_face(faces)
 
@@ -127,7 +136,12 @@ while True:
       servo_x.write(angle_x)
       servo_y.write(angle_y)
 
+    else:
+      GPIO.output(RED_PIN, False)
+
   except Exception as e:
     print e
     camera.stop_recording()
+    GPIO.output(RED_PIN, False)
+    GPIO.cleanup()
     sys.exit(0)
