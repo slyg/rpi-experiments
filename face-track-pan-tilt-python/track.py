@@ -8,7 +8,12 @@ from nanpy import (ArduinoApi, SerialManager, Servo)
 
 SERVO_X_ARDUINO_PIN = 8
 SERVO_Y_ARDUINO_PIN = 9
-SERVO_ANGLE_STEP = 3 # deg
+SERVO_ANGLE_STEP = 4 # deg
+
+RIGHT   = "RIGHT"
+LEFT    = "LEFT"
+TOP     = "TOP"
+BOTTOM  = "BOTTOM"
 
 try:
   ArduinoApi(connection=SerialManager())
@@ -57,18 +62,18 @@ def get_compensation_directions(face):
   x0, y0 = camera_center
   center_rad = 10
 
-  direction_x = "Center"
-  direction_y = "Center"
+  direction_x = "CENTER"
+  direction_y = "CENTER"
 
   if face_center_x > (x0 + center_rad) :
-    direction_x = "RIGHT"
+    direction_x = RIGHT
   elif face_center_x < (x0 - center_rad) :
-    direction_x = "LEFT"
+    direction_x = LEFT
 
   if face_center_y > (y0 + center_rad) :
-    direction_y = "BOTTOM"
+    direction_y = BOTTOM
   elif face_center_y < (y0 - center_rad) :
-    direction_y = "TOP"
+    direction_y = TOP
 
   return (direction_x, direction_y)
 
@@ -109,14 +114,14 @@ while True:
       # Compute compensation
       dx, dy = get_compensation_directions(biggest_face)
 
-      if dx == "RIGHT":
+      if dx == RIGHT:
         angle_x = angle_x - SERVO_ANGLE_STEP
-      elif dx == "LEFT":
+      elif dx == LEFT:
         angle_x = angle_x + SERVO_ANGLE_STEP
 
-      if dy == "BOTTOM":
+      if dy == BOTTOM:
         angle_y = angle_y + SERVO_ANGLE_STEP
-      elif dy == "TOP":
+      elif dy == TOP:
         angle_y = angle_y - SERVO_ANGLE_STEP
 
       servo_x.write(angle_x)
