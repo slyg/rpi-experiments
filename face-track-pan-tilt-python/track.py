@@ -7,34 +7,36 @@ import sys
 from nanpy import (ArduinoApi, SerialManager, Servo)
 import RPi.GPIO as GPIO
 
-SERVO_X_ARDUINO_PIN = 8
-SERVO_Y_ARDUINO_PIN = 9
-SERVO_ANGLE_STEP = 4 # deg
-RED_PIN = 18
+### Setup of GPIO pin ###
 
-RIGHT   = "RIGHT"
-LEFT    = "LEFT"
-TOP     = "TOP"
-BOTTOM  = "BOTTOM"
-
+FACE_DETECTION_STATUS_PIN = 18
 GPIO.setmode(GPIO.BCM)
 GPIO.setwarnings(False)
-GPIO.setup(RED_PIN, GPIO.OUT)
+GPIO.setup(FACE_DETECTION_STATUS_PIN, GPIO.OUT)
+
+
+
+### Setup of servo controls via arduino board ###
+
+SERVO_X_ARDUINO_PIN = 8
+SERVO_Y_ARDUINO_PIN = 9
 
 try:
-  ArduinoApi(connection=SerialManager())
+  connection = SerialManager()
+  ArduinoApi(connection=connection)
   servo_x = Servo(SERVO_X_ARDUINO_PIN)
   servo_y = Servo(SERVO_Y_ARDUINO_PIN)
 
-except:
-  print("Can't connect to arduino")
+except Exception as e:
+  print e
   sys.exit(0)
 
-def create_video_stream():
 
+
+def create_video_stream():
   camera = picamera.PiCamera()
   camera.resolution = (320, 240)
-  camera.framerate = 30
+  camera.framerate = 20
   camera.rotation = 180 # flip picture as camera is mounted upside-down
 
   v_stream = picamera.PiCameraCircularIO(camera, size=17000000)
@@ -58,31 +60,44 @@ def get_biggest_face(faces):
   _, biggest_face = biggest_face_with_area
   return biggest_face
 
-def get_compensation_directions(face):
+def get_compensation_angle(face):
 
-  x, y, w, h = biggest_face
+  x, y, w, h = face
 
-  face_center_x = x + w / 2
-  face_center_y = y + h / 2
+  # Position of the face
+  face_x = x + w / 2
+  face_y = y + h / 2
 
+  # Camera parameters and mappings
   x0, y0 = camera_center
-  center_rad = 10
+  x_op = float(50/2) # half opening of the cam in deg
+  y_op = float(40/2) # half opening of the cam in deg
+  cam_width = 320 # px
+  cam_heigh = 240 # px
 
-  direction_x = "CENTER"
-  direction_y = "CENTER"
+  # face position ratio
+  face_ratio_x = float(face_x) / cam_width
+  face_ratio_y = float(face_y) / cam_heigh
 
-  if face_center_x > (x0 + center_rad) :
-    direction_x = RIGHT
-  elif face_center_x < (x0 - center_rad) :
-    direction_x = LEFT
+  # ratio to angle
+  face_x_angle = int(x_op * (face_ratio_x - 0.5)) # deg
+  face_y_angle = int(y_op * (face_ratio_y - 0.5)) # deg
 
-  if face_center_y > (y0 + center_rad) :
-    direction_y = BOTTOM
-  elif face_center_y < (y0 - center_rad) :
-    direction_y = TOP
+  # Compute angle compensation
+  compensation_angle_x = 0
+  compensation_angle_y = 0
 
-  return (direction_x, direction_y)
+  if (face_x > x0) or (face_x < x0):
+    compensation_angle_x = -1 * face_x_angle
 
+  if (face_y > y0) or (face_y < y0) :
+    compensation_angle_y = face_y_angle
+
+  return (compensation_angle_x, compensation_angle_y)
+
+
+
+### Setup of camera and pan-tilt ###
 
 camera = create_video_stream()
 camera_center = map(lambda x: x/2, camera.resolution) # from camera resolution
@@ -90,9 +105,9 @@ camera_center = map(lambda x: x/2, camera.resolution) # from camera resolution
 # Face detection Haar cascade file
 face_cascade = cv2.CascadeClassifier('/usr/share/opencv/haarcascades/haarcascade_frontalface_alt.xml')
 
+# Initial pan-tilt angles
 angle_x = 90
 angle_y = 90
-
 servo_x.write(angle_x)
 servo_y.write(angle_y)
 
@@ -115,33 +130,28 @@ while True:
 
     if faces is not ():
       # Display face detection on a led
-      GPIO.output(RED_PIN, True)
+      GPIO.output(FACE_DETECTION_STATUS_PIN, True)
 
       # Look for the biggest face
       biggest_face = get_biggest_face(faces)
 
-      # Compute compensation
-      dx, dy = get_compensation_directions(biggest_face)
+      # Compute pan-tilt angle to adjust centring
+      ax, ay = get_compensation_angle(biggest_face)
 
-      if dx == RIGHT:
-        angle_x = angle_x - SERVO_ANGLE_STEP
-      elif dx == LEFT:
-        angle_x = angle_x + SERVO_ANGLE_STEP
-
-      if dy == BOTTOM:
-        angle_y = angle_y + SERVO_ANGLE_STEP
-      elif dy == TOP:
-        angle_y = angle_y - SERVO_ANGLE_STEP
-
+      # Update angles values
+      angle_x = angle_x + ax
+      angle_y = angle_y + ay
       servo_x.write(angle_x)
       servo_y.write(angle_y)
 
     else:
-      GPIO.output(RED_PIN, False)
+      GPIO.output(FACE_DETECTION_STATUS_PIN, False)
 
   except Exception as e:
     print e
     camera.stop_recording()
-    GPIO.output(RED_PIN, False)
+    GPIO.output(FACE_DETECTION_STATUS_PIN, False)
     GPIO.cleanup()
+    connection.flush_input()
+    connection.close()
     sys.exit(0)
